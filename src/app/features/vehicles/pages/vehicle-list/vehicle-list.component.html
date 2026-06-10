@@ -1,0 +1,25 @@
+<div class="page">
+  <div class="page__header">
+    <h1>Vehículos</h1>
+  </div>
+
+  @if (vehicles$ | async; as vehicles) {
+    @if (vehicles.length === 0) {
+      <p class="empty">No hay vehículos registrados.</p>
+    } @else {
+      <div class="vehicle-grid">
+        @for (vehicle of vehicles; track vehicle.id) {
+          <a class="vehicle-card" [routerLink]="[vehicle.id]">
+            <h3 class="vehicle-card__name">{{ vehicle.name }}</h3>
+            <p class="vehicle-card__plate">{{ vehicle.licensePlate }}</p>
+            @if (vehicle.color) {
+              <p class="vehicle-card__color">Color: {{ vehicle.color }}</p>
+            }
+          </a>
+        }
+      </div>
+    }
+  } @else {
+    <p class="loading">Cargando...</p>
+  }
+</div>

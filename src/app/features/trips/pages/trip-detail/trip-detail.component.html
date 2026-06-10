@@ -1,0 +1,48 @@
+@if (trip(); as trip) {
+  <div class="page">
+    <div class="page__header">
+      <div>
+        <a class="back" routerLink="/trips">← Volver</a>
+        <h1>{{ trip.title }}</h1>
+        <span class="status status--{{ trip.status.toLowerCase() }}">{{ trip.status }}</span>
+      </div>
+      <a class="btn btn--secondary" [routerLink]="['/trips', trip.id, 'edit']">Editar</a>
+    </div>
+
+    <div class="detail-grid">
+      <section class="card">
+        <h2>Información</h2>
+        <p><strong>Destino:</strong> {{ trip.destinationName }}</p>
+        <p><strong>Fechas:</strong> {{ trip.startDate }} → {{ trip.endDate }}</p>
+        @if (trip.description) {
+          <p><strong>Descripción:</strong> {{ trip.description }}</p>
+        }
+      </section>
+
+      <section class="card">
+        <h2>Vehículos ({{ vehicles().length }})</h2>
+        @for (v of vehicles(); track v.id) {
+          <div class="list-item">
+            <strong>{{ v.name }}</strong> — {{ v.licensePlate }}
+          </div>
+        } @empty {
+          <p class="empty">Sin vehículos asignados.</p>
+        }
+      </section>
+
+      <section class="card">
+        <h2>Puntos de ruta ({{ waypoints().length }})</h2>
+        @for (w of waypoints(); track w.id) {
+          <div class="list-item">
+            <span class="wp-type">{{ w.type }}</span>
+            <strong>{{ w.name }}</strong>
+          </div>
+        } @empty {
+          <p class="empty">Sin puntos de ruta.</p>
+        }
+      </section>
+    </div>
+  </div>
+} @else {
+  <p class="loading">Cargando viaje...</p>
+}

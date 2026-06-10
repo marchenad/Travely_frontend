@@ -1,0 +1,126 @@
+<div class="profile">
+
+  @if (user(); as u) {
+
+    <!-- Hero -->
+    <div class="profile-hero">
+      <a class="profile-hero__back" routerLink="/">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polyline points="15 18 9 12 15 6"/>
+        </svg>
+      </a>
+
+      <button class="profile-hero__avatar" (click)="triggerFileInput()" [class.uploading]="uploading()" title="Cambiar foto">
+        @if (u.profilePicture) {
+          <img [src]="u.profilePicture" alt="foto de perfil" class="avatar-img" />
+        } @else {
+          <span class="avatar-initial">{{ getInitial() }}</span>
+        }
+        <div class="avatar-overlay">
+          @if (uploading()) {
+            <span class="spinner"></span>
+          } @else {
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8">
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+              <circle cx="12" cy="13" r="4"/>
+            </svg>
+          }
+        </div>
+      </button>
+
+      <input #fileInput type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none" />
+
+      <h1 class="profile-hero__name">{{ u.name }}</h1>
+      <p class="profile-hero__email">{{ u.email }}</p>
+      <p class="profile-hero__since">Miembro desde {{ u.createdAt | date:'MMMM yyyy' }}</p>
+    </div>
+
+    <!-- Body -->
+    <div class="profile-body">
+
+      <!-- Datos de usuario -->
+      <div class="profile-card">
+        <div class="profile-card__header">
+          <p class="profile-card__title">Datos de usuario</p>
+          @if (!editMode()) {
+            <button class="btn-edit" (click)="toggleEdit()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              Editar
+            </button>
+          }
+        </div>
+
+        @if (editMode()) {
+          <div class="edit-form">
+            <div class="form-field">
+              <label class="form-label">Nombre</label>
+              <input class="form-input" [(ngModel)]="editName" placeholder="Tu nombre" />
+            </div>
+            <div class="form-field">
+              <label class="form-label">Teléfono</label>
+              <input class="form-input" [(ngModel)]="editPhone" placeholder="Tu teléfono" type="tel" />
+            </div>
+            <div class="form-actions">
+              <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
+              <button class="btn-save" (click)="saveProfile()" [disabled]="saving()">
+                @if (saving()) { Guardando... } @else { Guardar cambios }
+              </button>
+            </div>
+          </div>
+        } @else {
+          <div class="profile-row">
+            <span class="profile-row__label">Nombre</span>
+            <span class="profile-row__value">{{ u.name }}</span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-row__label">Correo</span>
+            <span class="profile-row__value">{{ u.email }}</span>
+          </div>
+          @if (u.phone) {
+            <div class="profile-row">
+              <span class="profile-row__label">Teléfono</span>
+              <span class="profile-row__value">{{ u.phone }}</span>
+            </div>
+          }
+          <div class="profile-row">
+            <span class="profile-row__label">Contraseña</span>
+            <span class="profile-row__value">••••••••</span>
+          </div>
+        }
+      </div>
+
+      <!-- Cuenta -->
+      <div class="profile-card">
+        <p class="profile-card__title">Cuenta</p>
+        <div class="profile-row">
+          <span class="profile-row__label">Plan actual</span>
+          <span class="plan-badge">Gratuito</span>
+        </div>
+      </div>
+
+    </div>
+
+  } @else {
+    <div class="skeleton-wrap">
+      <div class="sk-hero"></div>
+      <div class="sk-card"></div>
+      <div class="sk-card sk-card--short"></div>
+    </div>
+  }
+
+  <!-- Acciones -->
+  <div class="profile-actions">
+    <button class="btn-upgrade">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+        <polyline points="17 6 23 6 23 12"/>
+      </svg>
+      Mejorar plan
+    </button>
+    <button class="btn-logout" (click)="logout()">Cerrar sesión</button>
+  </div>
+
+</div>

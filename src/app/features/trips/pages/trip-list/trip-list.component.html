@@ -1,0 +1,27 @@
+<div class="page">
+  <div class="page__header">
+    <h1>Viajes</h1>
+    <a class="btn btn--primary" routerLink="new">+ Nuevo viaje</a>
+  </div>
+
+  @if (trips$ | async; as trips) {
+    @if (trips.length === 0) {
+      <p class="empty">No hay viajes registrados.</p>
+    } @else {
+      <div class="trip-grid">
+        @for (trip of trips; track trip.id) {
+          <a class="trip-card" [routerLink]="[trip.id]">
+            <div class="trip-card__status trip-card__status--{{ trip.status.toLowerCase() }}">
+              {{ trip.status }}
+            </div>
+            <h3 class="trip-card__title">{{ trip.title }}</h3>
+            <p class="trip-card__destination">{{ trip.destinationName }}</p>
+            <p class="trip-card__dates">{{ trip.startDate }} → {{ trip.endDate }}</p>
+          </a>
+        }
+      </div>
+    }
+  } @else {
+    <p class="loading">Cargando...</p>
+  }
+</div>

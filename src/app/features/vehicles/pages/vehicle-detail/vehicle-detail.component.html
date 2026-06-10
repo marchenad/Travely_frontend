@@ -1,0 +1,30 @@
+@if (vehicle(); as vehicle) {
+  <div class="page">
+    <a class="back" routerLink="/vehicles">← Volver</a>
+    <h1>{{ vehicle.name }}</h1>
+
+    <div class="detail-grid">
+      <section class="card">
+        <h2>Datos del vehículo</h2>
+        <p><strong>Matrícula:</strong> {{ vehicle.licensePlate }}</p>
+        @if (vehicle.color) {
+          <p><strong>Color:</strong> {{ vehicle.color }}</p>
+        }
+      </section>
+
+      @if (location(); as loc) {
+        <section class="card">
+          <h2>Última ubicación</h2>
+          <p><strong>Lat:</strong> {{ loc.latitude }}</p>
+          <p><strong>Lng:</strong> {{ loc.longitude }}</p>
+          @if (loc.speed !== undefined) {
+            <p><strong>Velocidad:</strong> {{ loc.speed }} km/h</p>
+          }
+          <p><strong>Actualizado:</strong> {{ loc.timestamp }}</p>
+        </section>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="loading">Cargando vehículo...</p>
+}

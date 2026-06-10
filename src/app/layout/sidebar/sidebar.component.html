@@ -1,0 +1,19 @@
+<nav class="sidebar">
+  <a class="sidebar__map-btn" routerLink="/">
+    <span>🗺</span>
+    <span>Mapa</span>
+  </a>
+
+  <div class="sidebar__divider"></div>
+
+  @for (item of navItems; track item.path) {
+    <a
+      class="sidebar__item"
+      [routerLink]="item.path"
+      routerLinkActive="sidebar__item--active"
+    >
+      <span class="sidebar__icon">{{ item.icon }}</span>
+      <span>{{ item.label }}</span>
+    </a>
+  }
+</nav>

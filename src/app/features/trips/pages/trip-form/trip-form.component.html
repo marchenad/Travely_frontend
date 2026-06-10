@@ -1,0 +1,52 @@
+<div class="page">
+  <div class="page__header">
+    <a class="back" routerLink="/trips">← Volver</a>
+    <h1>{{ isEdit() ? 'Editar viaje' : 'Nuevo viaje' }}</h1>
+  </div>
+
+  <form class="form card" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form__field">
+      <label>Título *</label>
+      <input type="text" formControlName="title" placeholder="Mi gran viaje" />
+    </div>
+
+    <div class="form__field">
+      <label>Destino *</label>
+      <input type="text" formControlName="destination" placeholder="Madrid, España" />
+    </div>
+
+    <div class="form__row">
+      <div class="form__field">
+        <label>Latitud *</label>
+        <input type="number" formControlName="destinationLat" step="any" />
+      </div>
+      <div class="form__field">
+        <label>Longitud *</label>
+        <input type="number" formControlName="destinationLng" step="any" />
+      </div>
+    </div>
+
+    <div class="form__row">
+      <div class="form__field">
+        <label>Fecha inicio *</label>
+        <input type="date" formControlName="startDate" />
+      </div>
+      <div class="form__field">
+        <label>Fecha fin *</label>
+        <input type="date" formControlName="endDate" />
+      </div>
+    </div>
+
+    <div class="form__field">
+      <label>Descripción</label>
+      <textarea formControlName="description" rows="3" placeholder="Descripción del viaje..."></textarea>
+    </div>
+
+    <div class="form__actions">
+      <a class="btn btn--secondary" routerLink="/trips">Cancelar</a>
+      <button class="btn btn--primary" type="submit" [disabled]="form.invalid">
+        {{ isEdit() ? 'Guardar cambios' : 'Crear viaje' }}
+      </button>
+    </div>
+  </form>
+</div>

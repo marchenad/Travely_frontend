@@ -1,0 +1,33 @@
+<div class="auth-page">
+
+  <div class="auth-card">
+    <h1 class="auth-card__logo">TRAVELY</h1>
+    <p class="auth-card__subtitle">Inicia sesión en tu cuenta</p>
+
+    @if (error()) {
+      <div class="auth-error">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <div class="field">
+        <label>CORREO ELECTRÓNICO</label>
+        <input type="email" formControlName="email" placeholder="tu@email.com" />
+      </div>
+
+      <div class="field">
+        <label>CONTRASEÑA</label>
+        <input type="password" formControlName="password" placeholder="••••••••" />
+      </div>
+
+      <button class="btn-primary" type="submit" [disabled]="form.invalid || loading()">
+        {{ loading() ? 'ENTRANDO...' : 'ENTRAR' }}
+      </button>
+    </form>
+
+    <p class="auth-card__switch">
+      ¿No tienes cuenta?
+      <a routerLink="/register">REGÍSTRATE</a>
+    </p>
+  </div>
+
+</div>

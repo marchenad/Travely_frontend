@@ -1,0 +1,751 @@
+<div class="map-view">
+
+  <!-- ══ MAPA ══════════════════════════════════════════════ -->
+  <div class="map-container" #mapContainer [style.transform]="mapTransform()"></div>
+
+  <!-- ══ BANNER UBICACIÓN ══════════════════════════════════ -->
+  @if (locationStatus() === 'denied') {
+    <div class="location-banner location-banner--denied">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      Ubicación denegada — actívala en la configuración del navegador
+    </div>
+  }
+  @if (locationStatus() === 'unsupported') {
+    <div class="location-banner location-banner--warn">
+      Tu navegador no soporta geolocalización
+    </div>
+  }
+
+  <!-- ══ MODO DEFAULT / BÚSQUEDA ══════════════════════════ -->
+  @if (mode() !== 'navigation') {
+
+    <!-- Barra superior -->
+    <div class="top-bar">
+      <div class="search-box" [class.search-box--active]="mode() === 'search'">
+        <input
+          class="search-input"
+          type="text"
+          placeholder="¿A dónde vas?"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchInput($event)"
+          (blur)="blurSearch()"
+        />
+      </div>
+      <a class="top-bar__avatar" routerLink="/users">
+        @if (authService.currentUser()?.profilePicture) {
+          <img [src]="authService.currentUser()!.profilePicture" alt="avatar" class="avatar-photo" />
+        } @else {
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        }
+      </a>
+    </div>
+
+    <!-- Autocomplete -->
+    @if (mode() === 'search' && searchResults().length > 0) {
+      <div class="autocomplete">
+        @for (place of searchResults(); track place.place_id) {
+          <button class="autocomplete__item" (click)="selectPlace(place)">
+            {{ place.display_name }}
+          </button>
+        }
+      </div>
+    }
+    @if (mode() === 'search' && searchLoading()) {
+      <div class="autocomplete">
+        <span class="autocomplete__item autocomplete__item--loading">Buscando...</span>
+      </div>
+    }
+
+    <!-- Panel de viajes -->
+    @if (mode() === 'trips') {
+      <div class="trips-panel">
+
+        <div class="trips-panel__header">
+          <span class="trips-panel__title">Mis viajes</span>
+          <button class="trips-panel__close" (click)="openTripsPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        @if (trips().length === 0) {
+          <div class="trips-panel__empty">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p>No tienes viajes guardados</p>
+          </div>
+        } @else {
+          <div class="trips-panel__list">
+            @for (trip of trips(); track trip.id) {
+              <div class="trip-card" [class.trip-card--active]="activeTrip()?.id === trip.id"
+                   (click)="selectTripFromPanel(trip)">
+
+                <div class="trip-card__indicator"
+                     [class.trip-card__indicator--active]="trip.status === 'ACTIVE'">
+                </div>
+
+                <div class="trip-card__body">
+                  <span class="trip-card__name">{{ trip.title }}</span>
+                  <span class="trip-card__dest">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {{ trip.destinationName || 'Sin destino' }}
+                  </span>
+                </div>
+
+                @if (activeTrip()?.id === trip.id) {
+                  <span class="trip-card__badge">Activo</span>
+                }
+
+                <button class="trip-card__delete" (click)="deleteTrip(trip, $event)"
+                        title="Eliminar viaje">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <polyline points="3 6 5 6 21 6"/>
+                    <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                    <path d="M10 11v6M14 11v6"/>
+                    <path d="M9 6V4h6v2"/>
+                  </svg>
+                </button>
+
+              </div>
+            }
+          </div>
+        }
+
+        @if (tripsHasMore()) {
+          <button class="trips-panel__load-more" (click)="loadMoreTrips()" [disabled]="tripsLoading()">
+            @if (tripsLoading()) {
+              Cargando…
+            } @else {
+              Cargar más viajes
+            }
+          </button>
+        }
+
+        <button class="trips-panel__new" (click)="openCreateSheet()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          Nuevo viaje
+        </button>
+
+      </div>
+    }
+
+    <!-- Barra inferior -->
+    <div class="bottom-bar">
+      @if (activeTrip(); as trip) {
+        <div class="trip-sheet">
+          <!-- Handle -->
+          <div class="trip-sheet__handle"></div>
+
+          <!-- Header: nombre + cerrar -->
+          <div class="trip-sheet__header">
+            <div class="trip-sheet__info">
+              <span class="trip-sheet__name">{{ trip.title }}</span>
+              <span class="trip-sheet__dest">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                {{ trip.destinationName || 'Sin destino' }}
+              </span>
+            </div>
+            <div class="trip-sheet__meta">
+              @if (vehicles().length > 0) {
+                <span class="trip-sheet__vehicles">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                       stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <rect x="1" y="3" width="15" height="13" rx="2"/>
+                    <path d="M16 8h4l3 5v3h-7V8z"/>
+                    <circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                  </svg>
+                  {{ vehicles().length }}
+                </span>
+              }
+              @if (tracking() && liveLocations().length > 0) {
+                <span class="live-badge">
+                  <span class="live-badge__dot"></span>
+                  {{ trackingLabel() }}
+                </span>
+              }
+            </div>
+            <button class="trip-sheet__close" (click)="deselectTrip()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Participantes actuales -->
+          @if (vehicles().length > 0) {
+            <div class="trip-sheet__participants">
+              @for (v of vehicles(); track v.id) {
+                <div class="trip-participant">
+                  <div class="trip-participant__avatar">
+                    @if (v.driverProfilePicture) {
+                      <img [src]="v.driverProfilePicture" alt="" class="avatar-photo" />
+                    } @else {
+                      {{ v.name.charAt(0).toUpperCase() }}
+                    }
+                  </div>
+                  <span class="trip-participant__name">{{ v.name }}</span>
+                  <button class="trip-participant__remove"
+                          title="Eliminar del viaje"
+                          (click)="removeParticipant(v.id)">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Acciones -->
+          <div class="trip-sheet__actions">
+            <button class="trip-sheet__btn trip-sheet__btn--secondary" (click)="openAddVehicle()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/>
+              </svg>
+              Invitar
+            </button>
+            <button class="trip-sheet__btn trip-sheet__btn--primary" (click)="startNavigation()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                   stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Empezar
+            </button>
+          </div>
+        </div>
+      } @else {
+        <span class="bottom-bar__hint">Toca el mapa para crear un viaje</span>
+        <button class="bottom-bar__fab" (click)="openTripsPanel()">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      }
+    </div>
+
+  }
+
+  <!-- ══ FORMULARIO CREAR VIAJE ══════════════════════════ -->
+  @if (mode() === 'create-trip') {
+    <div class="create-sheet">
+      <div class="create-sheet__header">
+        <span class="create-sheet__title">NUEVO VIAJE</span>
+        <button class="create-sheet__close" (click)="cancelCreate()">✕</button>
+      </div>
+
+      <form [formGroup]="createForm" (ngSubmit)="submitCreateTrip()" class="create-form">
+        <div class="create-field">
+          <label>TÍTULO *</label>
+          <input type="text" formControlName="title" placeholder="Viaje a Lisboa" />
+        </div>
+
+        <div class="create-field">
+          <label>DESTINO</label>
+          <input type="text" formControlName="destination" />
+        </div>
+
+        <div class="create-actions">
+          <button type="button" class="btn-cancel" (click)="cancelCreate()">CANCELAR</button>
+          <button type="submit" class="btn-create"
+                  [disabled]="createForm.invalid || creating()">
+            {{ creating() ? 'CREANDO...' : 'CREAR VIAJE' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  <!-- ══ PANEL INVITAR USUARIO ══════════════════════════ -->
+  @if (showAddVehicle()) {
+    <div class="create-sheet">
+      <div class="create-sheet__header">
+        <span class="create-sheet__title">INVITAR AL VIAJE</span>
+        <button class="create-sheet__close" (click)="closeAddVehicle()">✕</button>
+      </div>
+
+      <div class="invite-form">
+        <p class="invite-form__hint">
+          Busca a un usuario por su correo electrónico para invitarle a unirse a este viaje.
+          Recibirá la navegación automáticamente cuando inicies.
+        </p>
+
+        <div class="create-field">
+          <label>CORREO ELECTRÓNICO</label>
+          <div class="invite-search">
+            <input
+              type="email"
+              class="invite-search__input"
+              placeholder="usuario@correo.com"
+              [ngModel]="inviteEmailValue"
+              (ngModelChange)="inviteEmailValue = $event; resetInviteSearch()"
+              (keydown.enter)="searchUserToInvite()"
+            />
+            <button class="invite-search__btn" (click)="searchUserToInvite()"
+                    [disabled]="!inviteEmailValue || inviteLoading()">
+              @if (inviteLoading()) {
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                     stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                     style="animation: spin 0.8s linear infinite">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+              } @else {
+                Buscar
+              }
+            </button>
+          </div>
+        </div>
+
+        @if (inviteError()) {
+          <div class="invite-error">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ inviteError() }}
+          </div>
+        }
+
+        @if (foundUser(); as user) {
+          <div class="invite-user-card" [class.invite-user-card--duplicate]="isAlreadyInTrip(user.id)">
+            <div class="invite-user-card__avatar">
+              @if (user.profilePicture) {
+                <img [src]="user.profilePicture" alt="" class="avatar-photo" />
+              } @else {
+                {{ user.name.charAt(0).toUpperCase() }}
+              }
+            </div>
+            <div class="invite-user-card__info">
+              <span class="invite-user-card__name">{{ user.name }}</span>
+              <span class="invite-user-card__email">
+                @if (isAlreadyInTrip(user.id)) { Ya está en el viaje }
+                @else { {{ user.email }} }
+              </span>
+            </div>
+            @if (isAlreadyInTrip(user.id)) {
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                   stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="8" x2="12" y2="12"/>
+                <line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+            } @else {
+              <svg class="invite-user-card__check" width="18" height="18" viewBox="0 0 24 24"
+                   fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            }
+          </div>
+        }
+
+        <div class="create-actions">
+          <button type="button" class="btn-cancel" (click)="closeAddVehicle()">CANCELAR</button>
+          <button type="button" class="btn-create"
+                  [disabled]="!foundUser() || inviting() || (!!foundUser() && isAlreadyInTrip(foundUser()!.id))"
+                  (click)="confirmInviteUser()">
+            {{ inviting() ? 'AÑADIENDO...' : 'AÑADIR AL VIAJE' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══ BOTÓN CENTRAR EN UBICACIÓN ════════════════════ -->
+  <button
+    class="locate-btn"
+    [class.locate-btn--following]="following()"
+    [class.locate-btn--nav]="mode() === 'navigation'"
+    (click)="centerOnUser()"
+    title="Centrar en mi ubicación"
+  >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <line x1="12" y1="2" x2="12" y2="6"/>
+      <line x1="12" y1="18" x2="12" y2="22"/>
+      <line x1="2" y1="12" x2="6" y2="12"/>
+      <line x1="18" y1="12" x2="22" y2="12"/>
+    </svg>
+  </button>
+
+  <!-- ══ INVITACIÓN A NAVEGAR ════════════════════════════ -->
+  @if (pendingNavInvite(); as invite) {
+    <div class="nav-invite-overlay">
+      <div class="nav-invite-card">
+
+        <div class="nav-invite-card__icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="3 11 22 2 13 21 11 13 3 11"/>
+          </svg>
+        </div>
+
+        <div class="nav-invite-card__body">
+          <p class="nav-invite-card__title">Viaje iniciado</p>
+          <p class="nav-invite-card__creator">
+            <strong>{{ invite.tripCreatorName ?? 'Alguien' }}</strong>
+            ha iniciado la navegación
+          </p>
+          <div class="nav-invite-card__dest">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            {{ invite.tripDestinationName ?? invite.tripTitle ?? 'Destino desconocido' }}
+          </div>
+        </div>
+
+        <div class="nav-invite-card__actions">
+          <button class="nav-invite-card__btn nav-invite-card__btn--reject"
+                  (click)="rejectNavInvite()">
+            Rechazar
+          </button>
+          <button class="nav-invite-card__btn nav-invite-card__btn--accept"
+                  (click)="acceptNavInvite()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Unirse a la ruta
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- ══ MODO NAVEGACIÓN ══════════════════════════════════ -->
+  @if (mode() === 'navigation') {
+
+    <!-- Card instrucción (flotante arriba) -->
+    <div class="nav-instruction-card">
+      <div class="nav-instruction-card__arrow">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"/>
+          <polyline points="5 12 12 5 19 12"/>
+        </svg>
+      </div>
+      <div class="nav-instruction-card__text">
+        <span class="nav-instruction-card__street">
+          {{ currentInstruction() || 'Sigue la ruta' }}
+        </span>
+        <span class="nav-instruction-card__label">próxima maniobra</span>
+      </div>
+      <button class="nav-instruction-card__close" (click)="cancelNavigation()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Panel Chat -->
+    @if (showChatPanel()) {
+      <div class="nav-vehicles-panel nav-chat-panel">
+        <div class="nav-vehicles-panel__header">
+          <span class="nav-vehicles-panel__title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+            </svg>
+            Chat del viaje
+          </span>
+          <button class="nav-vehicles-panel__close" (click)="toggleChatPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="nav-chat-messages">
+          @if (chat.messages().length === 0) {
+            <p class="nav-chat-empty">Sin mensajes aún. ¡Di hola!</p>
+          }
+          @for (msg of chat.messages(); track msg.id) {
+            <div class="nav-chat-msg"
+                 [class.nav-chat-msg--own]="msg.senderId === authService.currentUser()?.userId">
+              @if (msg.senderId !== authService.currentUser()?.userId) {
+                <span class="nav-chat-msg__author">{{ msg.senderName }}</span>
+              }
+              <div class="nav-chat-msg__bubble">{{ msg.content }}</div>
+              <span class="nav-chat-msg__time">
+                {{ msg.sentAt | date:'HH:mm' }}
+              </span>
+            </div>
+          }
+        </div>
+
+        <div class="nav-chat-input">
+          <input
+            class="nav-chat-input__field"
+            type="text"
+            placeholder="Escribe un mensaje…"
+            [(ngModel)]="chatInput"
+            (keydown.enter)="sendChatMessage()"
+            maxlength="500"
+          />
+          <button class="nav-chat-input__send" (click)="sendChatMessage()"
+                  [disabled]="!chatInput.trim()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- Panel Radio — llamadas -->
+    @if (showRadioPanel()) {
+      <div class="nav-vehicles-panel">
+        <div class="nav-vehicles-panel__header">
+          <span class="nav-vehicles-panel__title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.7 12.24 19.79 19.79 0 0 1 1.67 3.66 2 2 0 0 1 3.65 1.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.1a16 16 0 0 0 6 6l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 16.5z"/>
+            </svg>
+            Llamar a participante
+          </span>
+          <button class="nav-vehicles-panel__close" (click)="toggleRadioPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        @if (vehicles().length === 0) {
+          <div class="nav-vehicles-panel__empty">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07"/>
+            </svg>
+            <p>No hay participantes en este viaje</p>
+          </div>
+        } @else {
+          <div class="nav-vehicles-panel__list">
+            @for (v of vehicles(); track v.id) {
+              <div class="nav-radio-item">
+                <div class="nav-vehicles-panel__avatar">
+                  @if (v.driverProfilePicture) {
+                    <img [src]="v.driverProfilePicture" alt="" class="avatar-photo" />
+                  } @else {
+                    {{ v.name.charAt(0).toUpperCase() }}
+                  }
+                </div>
+                <div class="nav-vehicles-panel__info">
+                  <span class="nav-vehicles-panel__name">{{ v.name }}</span>
+                  <span class="nav-vehicles-panel__status">
+                    {{ v.driverPhone ?? 'Sin teléfono' }}
+                  </span>
+                </div>
+                @if (v.driverPhone) {
+                  <a class="nav-radio-item__call" [href]="'tel:' + v.driverPhone"
+                     title="Llamar a {{ v.name }}">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.7 12.24 19.79 19.79 0 0 1 1.67 3.66 2 2 0 0 1 3.65 1.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.1a16 16 0 0 0 6 6l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 16.5z"/>
+                    </svg>
+                  </a>
+                }
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Panel participantes -->
+    @if (showVehiclesPanel()) {
+      <div class="nav-vehicles-panel">
+        <div class="nav-vehicles-panel__header">
+          <span class="nav-vehicles-panel__title">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+            </svg>
+            Participantes en ruta
+          </span>
+          <button class="nav-vehicles-panel__close" (click)="toggleVehiclesPanel()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        @if (otherVehicles().length === 0) {
+          <div class="nav-vehicles-panel__empty">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+              <circle cx="9" cy="7" r="4"/>
+            </svg>
+            <p>No hay participantes en este viaje</p>
+          </div>
+        } @else {
+          <div class="nav-vehicles-panel__list">
+            @for (v of otherVehicles(); track v.id) {
+              <div class="nav-vehicles-panel__item">
+                <div class="nav-vehicles-panel__avatar"
+                     [class.nav-vehicles-panel__avatar--live]="isVehicleLive(v.id)">
+                  @if (v.driverProfilePicture) {
+                    <img [src]="v.driverProfilePicture" alt="" class="avatar-photo" />
+                  } @else {
+                    {{ v.name.charAt(0).toUpperCase() }}
+                  }
+                </div>
+                <div class="nav-vehicles-panel__info">
+                  <span class="nav-vehicles-panel__name">{{ v.name }}</span>
+                  @if (isVehicleLive(v.id)) {
+                    <span class="nav-vehicles-panel__status nav-vehicles-panel__status--live">
+                      <span class="live-badge__dot"></span>
+                      ETA {{ getParticipantEta(v.id) }}
+                    </span>
+                  } @else {
+                    <span class="nav-vehicles-panel__status">Sin ubicación</span>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Card inferior (flotante abajo) -->
+    <div class="nav-bottom-card">
+      <div class="nav-bottom-card__summary">
+        <div class="nav-bottom-card__eta">
+          <span class="nav-bottom-card__eta-value">{{ navEta() }}</span>
+          <span class="nav-bottom-card__eta-label">tiempo estimado</span>
+        </div>
+        <div class="nav-bottom-card__dest">
+          <span class="nav-bottom-card__dest-name">{{ activeTrip()?.destinationName }}</span>
+          @if (otherVehicles().length > 0) {
+            <span class="nav-bottom-card__vehicles">
+              <span class="live-badge__dot"></span>
+              {{ otherVehicles().length }} vehículo{{ otherVehicles().length !== 1 ? 's' : '' }} en ruta
+            </span>
+          }
+        </div>
+        <a class="nav-bottom-card__avatar" routerLink="/users">
+          @if (authService.currentUser()?.profilePicture) {
+            <img [src]="authService.currentUser()!.profilePicture" alt="avatar" class="avatar-photo" />
+          } @else {
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          }
+        </a>
+      </div>
+      <div class="nav-bottom-card__actions">
+        <button class="nav-action-btn"
+                [class.nav-action-btn--active]="audioEnabled()"
+                (click)="toggleAudio()">
+          @if (audioEnabled()) {
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+          } @else {
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                 stroke="currentColor" stroke-width="2" stroke-linecap="round">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <line x1="23" y1="9" x2="17" y2="15"/>
+              <line x1="17" y1="9" x2="23" y2="15"/>
+            </svg>
+          }
+          Audio
+        </button>
+        <button class="nav-action-btn"
+                [class.nav-action-btn--active]="showRadioPanel()"
+                (click)="toggleRadioPanel()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.7 12.24 19.79 19.79 0 0 1 1.67 3.66 2 2 0 0 1 3.65 1.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.1a16 16 0 0 0 6 6l.97-.97a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 16.5z"/>
+          </svg>
+          Radio
+        </button>
+        <button class="nav-action-btn nav-action-btn--vehicles"
+                [class.nav-action-btn--active]="showVehiclesPanel()"
+                (click)="toggleVehiclesPanel()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          Vehículos
+        </button>
+        <button class="nav-action-btn"
+                [class.nav-action-btn--active]="showChatPanel()"
+                (click)="toggleChatPanel()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+          </svg>
+          Chat
+          @if (chat.unreadCount() > 0 && !showChatPanel()) {
+            <span class="nav-action-btn__badge">{{ chat.unreadCount() }}</span>
+          }
+        </button>
+        <button class="nav-action-btn nav-action-btn--end" (click)="cancelNavigation()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+          </svg>
+          Finalizar
+        </button>
+      </div>
+    </div>
+
+  }
+
+</div>

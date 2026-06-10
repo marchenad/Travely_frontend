@@ -1,0 +1,29 @@
+.page {
+  &__header {
+    margin-bottom: 24px;
+    h1 { font-size: 1.5rem; }
+  }
+}
+
+.vehicle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
+}
+
+.vehicle-card {
+  display: block;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 20px;
+  transition: box-shadow 0.2s;
+
+  &:hover { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+
+  &__name { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+  &__plate { font-size: 0.875rem; color: #555; margin-bottom: 4px; }
+  &__color { font-size: 0.8rem; color: #888; }
+}
+
+.empty, .loading { color: #888; margin-top: 24px; }

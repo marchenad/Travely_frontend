@@ -1,0 +1,43 @@
+<div class="auth-page">
+
+  <div class="auth-card">
+    <h1 class="auth-card__logo">TRAVELY</h1>
+    <p class="auth-card__subtitle">Crea tu cuenta</p>
+
+    @if (error()) {
+      <div class="auth-error">{{ error() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" class="auth-form">
+      <div class="field">
+        <label>NOMBRE</label>
+        <input type="text" formControlName="name" placeholder="David Marchena" />
+      </div>
+
+      <div class="field">
+        <label>CORREO ELECTRÓNICO</label>
+        <input type="email" formControlName="email" placeholder="tu@email.com" />
+      </div>
+
+      <div class="field">
+        <label>TELÉFONO</label>
+        <input type="tel" formControlName="phone" placeholder="666 08 71 61" />
+      </div>
+
+      <div class="field">
+        <label>CONTRASEÑA</label>
+        <input type="password" formControlName="password" placeholder="Mínimo 6 caracteres" />
+      </div>
+
+      <button class="btn-primary" type="submit" [disabled]="form.invalid || loading()">
+        {{ loading() ? 'CREANDO...' : 'CREAR CUENTA' }}
+      </button>
+    </form>
+
+    <p class="auth-card__switch">
+      ¿Ya tienes cuenta?
+      <a routerLink="/login">INICIA SESIÓN</a>
+    </p>
+  </div>
+
+</div>

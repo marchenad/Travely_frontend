@@ -1,0 +1,185 @@
+@import 'leaflet/dist/leaflet.css';
+
+// ══════════════════════════════════════════════════════════════
+// TRAVELY — Design System
+// ══════════════════════════════════════════════════════════════
+
+:root {
+  // Colores
+  --primary:        #4f46e5;
+  --primary-light:  rgba(79, 70, 229, 0.12);
+  --primary-shadow: rgba(79, 70, 229, 0.35);
+  --danger:         #ef4444;
+  --danger-light:   rgba(239, 68, 68, 0.10);
+  --success:        #22c55e;
+  --text-primary:   #111827;
+  --text-secondary: #6b7280;
+  --text-muted:     rgba(0,0,0,0.4);
+
+  // Glassmorphism
+  --glass-bg:       rgba(255, 255, 255, 0.75);
+  --glass-border:   1px solid rgba(255, 255, 255, 0.55);
+  --glass-blur:     blur(16px);
+  --glass-shadow:   0 4px 24px rgba(0, 0, 0, 0.10);
+
+  // Superficie sólida (pantallas no-mapa)
+  --surface:        #ffffff;
+  --surface-soft:   #f8f8fc;
+  --surface-border: rgba(0,0,0,0.07);
+
+  // Página de fondo
+  --page-bg: linear-gradient(145deg, #eef0ff 0%, #f5f3ff 50%, #faf5ff 100%);
+
+  // Radio
+  --radius-sm:  10px;
+  --radius-md:  16px;
+  --radius-lg:  22px;
+  --radius-xl:  28px;
+  --radius-pill: 999px;
+
+  // Sombras
+  --shadow-sm:  0 2px 8px  rgba(0,0,0,0.07);
+  --shadow-md:  0 4px 20px rgba(0,0,0,0.10);
+  --shadow-lg:  0 8px 40px rgba(0,0,0,0.14);
+  --shadow-primary: 0 4px 16px var(--primary-shadow);
+}
+
+// ── Reset ──────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  font-family: -apple-system, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+  font-size: 16px;
+  color: var(--text-primary);
+  background: var(--page-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+a   { color: inherit; text-decoration: none; }
+button { cursor: pointer; font-family: inherit; }
+input  { font-family: inherit; }
+
+// ── Shared auth / page layout ──────────────────────────────────
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--page-bg);
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: 40px 32px 32px;
+
+  &__logo {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: 3px;
+    color: var(--primary);
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  &__subtitle {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  &__switch {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    text-align: center;
+    margin-top: 20px;
+
+    a {
+      font-weight: 700;
+      color: var(--primary);
+    }
+  }
+}
+
+.auth-error {
+  background: var(--danger-light);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border-radius: var(--radius-sm);
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  input {
+    padding: 13px 16px;
+    border: 1.5px solid var(--surface-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.92rem;
+    background: rgba(255,255,255,0.6);
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+
+    &:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    &::placeholder { color: rgba(0,0,0,0.25); }
+  }
+}
+
+.btn-primary {
+  margin-top: 6px;
+  width: 100%;
+  padding: 15px;
+  background: var(--primary);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #fff;
+  box-shadow: var(--shadow-primary);
+  transition: opacity 0.15s, transform 0.1s;
+
+  &:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+  &:active { transform: translateY(0); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
