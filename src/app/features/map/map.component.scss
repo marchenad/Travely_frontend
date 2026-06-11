@@ -1865,6 +1865,10 @@
 
 // ── Dark mode overrides ────────────────────────────────────
 :host-context(html.dark) {
+  ::ng-deep .leaflet-tile-pane {
+    filter: brightness(1.45) contrast(0.88) saturate(0.75);
+  }
+
   .trip-card {
     background: rgba(255,255,255,0.06);
     &:hover { background: rgba(255,255,255,0.11); }

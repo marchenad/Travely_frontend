@@ -804,7 +804,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
 
   private tileUrl(dark: boolean): string {
     return dark
-      ? 'https://{s}.basemaps.cartocdn.com/rastertiles/dark_matter/{z}/{x}/{y}{r}.png'
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
       : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
   }
 
