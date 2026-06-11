@@ -44,6 +44,36 @@
   --shadow-primary: 0 4px 16px var(--primary-shadow);
 }
 
+// ── Dark mode ──────────────────────────────────────────────────
+html.dark {
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     rgba(255,255,255,0.35);
+
+  --glass-bg:       rgba(22, 22, 38, 0.82);
+  --glass-border:   1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow:   0 4px 24px rgba(0, 0, 0, 0.35);
+
+  --surface:        #16162a;
+  --surface-soft:   #1e1e35;
+  --surface-border: rgba(255,255,255,0.07);
+
+  --page-bg: linear-gradient(145deg, #0f0f1a 0%, #13111f 50%, #160f22 100%);
+
+  --shadow-sm:  0 2px 8px  rgba(0,0,0,0.3);
+  --shadow-md:  0 4px 20px rgba(0,0,0,0.4);
+  --shadow-lg:  0 8px 40px rgba(0,0,0,0.5);
+
+  color-scheme: dark;
+
+  .field input {
+    background: rgba(255,255,255,0.05);
+    &::placeholder { color: rgba(255,255,255,0.22); }
+  }
+
+  .auth-card { background: var(--glass-bg); }
+}
+
 // ── Reset ──────────────────────────────────────────────────────
 *,
 *::before,

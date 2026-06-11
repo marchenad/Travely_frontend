@@ -6,6 +6,7 @@ import { DatePipe } from '@angular/common';
 import { UserService } from '../../../../core/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ToastService } from '../../../../core/services/toast.service';
+import { ThemeService } from '../../../../core/services/theme.service';
 import { User } from '../../../../shared/models/user.model';
 
 @Component({
@@ -21,6 +22,7 @@ export class UserProfileComponent implements OnInit {
   private readonly userService = inject(UserService);
   private readonly authService = inject(AuthService);
   private readonly toast       = inject(ToastService);
+  readonly themeService        = inject(ThemeService);
 
   readonly user      = signal<User | null>(null);
   readonly editMode  = signal(false);
