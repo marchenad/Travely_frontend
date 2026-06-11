@@ -420,14 +420,14 @@
             @if (msg.lugares && msg.lugares.length > 0) {
               <div class="copilot-lugares">
                 @for (lugar of msg.lugares; track lugar.nombre) {
-                  <span class="copilot-lugar">
+                  <button class="copilot-lugar" (click)="navigateToCopilotPlace(lugar)">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
                          stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
                       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                       <circle cx="12" cy="10" r="3"/>
                     </svg>
                     {{ lugar.nombre }}
-                  </span>
+                  </button>
                 }
               </div>
             }

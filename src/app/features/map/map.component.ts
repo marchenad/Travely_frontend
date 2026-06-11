@@ -808,6 +808,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  navigateToCopilotPlace(lugar: CopilotLocation): void {
+    this.copilotLayer.clearLayers();
+    this.drawOsrmRoute(lugar.lat, lugar.lng, true);
+    this.showCopilotPanel.set(false);
+  }
+
   sendCopilotMessage(): void {
     const text = this.copilotInput.trim();
     if (!text || this.copilotLoading()) return;
