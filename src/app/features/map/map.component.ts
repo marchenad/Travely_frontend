@@ -809,9 +809,20 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   }
 
   navigateToCopilotPlace(lugar: CopilotLocation): void {
-    this.copilotLayer.clearLayers();
-    this.drawOsrmRoute(lugar.lat, lugar.lng, true);
     this.showCopilotPanel.set(false);
+    this.copilotLayer.clearLayers();
+    this.clickedLat = lugar.lat;
+    this.clickedLng = lugar.lng;
+    this.searchQuery.set(lugar.nombre);
+    this.mode.set('create-trip');
+    this.map.flyTo([lugar.lat, lugar.lng], 15, { duration: 1.2 });
+    this.removeTempMarker();
+    this.tempMarker = L.marker([lugar.lat, lugar.lng])
+      .bindPopup(`<strong>${lugar.nombre}</strong>`)
+      .addTo(this.map)
+      .openPopup();
+    this.createForm.reset();
+    this.createForm.patchValue({ destination: lugar.nombre });
   }
 
   sendCopilotMessage(): void {
