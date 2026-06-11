@@ -16,8 +16,8 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import * as L from 'leaflet';
-import { Subject, of } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { Subject, of, EMPTY } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap, timeout } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 import { TripService } from '../../core/services/trip.service';
@@ -37,6 +37,16 @@ import { ParticipantService }  from './services/participant.service';
 import { ChatService }         from './services/chat.service';
 
 // ── Tipos ────────────────────────────────────────────────────
+interface CopilotLocation { nombre: string; lat: number; lng: number; }
+interface CopilotMsg { role: 'user' | 'ai'; text: string; lugares?: CopilotLocation[]; }
+interface CopilotResponse {
+  tipo: 'INFO' | 'SET_ROUTE';
+  mensaje: string;
+  accion: string;
+  lugares?: CopilotLocation[];
+  destino?: { lat: number; lng: number };
+}
+
 interface NominatimResult {
   place_id: number;
   display_name: string;
@@ -88,6 +98,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private markersLayer   = L.layerGroup();
   private routeLayer     = L.layerGroup();
   private vehicleLayer   = L.layerGroup();
+  private copilotLayer   = L.layerGroup();
   private vehicleMarkers = new Map<number, L.CircleMarker>();
   private tempMarker?: L.Marker;
   private userMarker?: L.Marker;
@@ -116,6 +127,10 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   readonly showRadioPanel    = signal(false);
   readonly showChatPanel     = signal(false);
   chatInput = '';
+  readonly showCopilotPanel  = signal(false);
+  readonly copilotMessages   = signal<CopilotMsg[]>([]);
+  readonly copilotLoading    = signal(false);
+  copilotInput = '';
   readonly audioEnabled      = signal(false);
   readonly navHeading        = signal(0);
   readonly following         = signal(true);
@@ -216,6 +231,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
     this.markersLayer.addTo(this.map);
     this.routeLayer.addTo(this.map);
     this.vehicleLayer.addTo(this.map);
+    this.copilotLayer.addTo(this.map);
 
     this.map.on('dragstart', () => this.following.set(false));
     this.requestLocation();
@@ -780,5 +796,71 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       DEPARTURE: '#16a34a', DESTINATION: '#dc2626',
       STOP: '#f59e0b', POINT_OF_INTEREST: '#3730a3',
     } as Record<string, string>)[type] ?? '#555';
+  }
+
+  // ── Copiloto IA ──────────────────────────────────────────────
+  toggleCopilotPanel(): void {
+    this.showCopilotPanel.update((v) => !v);
+    if (this.showCopilotPanel()) {
+      this.showVehiclesPanel.set(false);
+      this.showRadioPanel.set(false);
+      this.showChatPanel.set(false);
+    }
+  }
+
+  sendCopilotMessage(): void {
+    const text = this.copilotInput.trim();
+    if (!text || this.copilotLoading()) return;
+
+    this.copilotMessages.update((msgs) => [...msgs, { role: 'user', text }]);
+    this.copilotInput = '';
+    this.copilotLoading.set(true);
+
+    this.http.post<CopilotResponse>(
+      'https://n8n.devdyd.com/webhook/copiloto-gps',
+      { chatInput: text, lat: this.userLat, lng: this.userLng },
+    ).pipe(
+      timeout(60000),
+      catchError(() => {
+        this.copilotLoading.set(false);
+        this.copilotMessages.update((msgs) => [
+          ...msgs,
+          { role: 'ai', text: 'No se pudo conectar con el asistente. Inténtalo de nuevo.' },
+        ]);
+        return EMPTY;
+      }),
+    ).subscribe((res) => {
+      this.copilotLoading.set(false);
+
+      if (!res || typeof res.tipo !== 'string') {
+        this.copilotMessages.update((msgs) => [
+          ...msgs, { role: 'ai', text: 'Respuesta inesperada del asistente.' },
+        ]);
+        return;
+      }
+
+      if (res.tipo === 'INFO') {
+        const lugares = Array.isArray(res.lugares) ? res.lugares : [];
+        this.copilotMessages.update((msgs) => [...msgs, { role: 'ai', text: res.mensaje, lugares }]);
+        this.copilotLayer.clearLayers();
+        lugares.forEach((l) => {
+          L.circleMarker([l.lat, l.lng], {
+            radius: 10, fillColor: '#f59e0b', color: '#fff', weight: 2, fillOpacity: 1,
+          }).bindPopup(`<strong>${l.nombre}</strong>`).addTo(this.copilotLayer);
+        });
+        if (lugares.length > 0) {
+          this.map.fitBounds(
+            L.latLngBounds(lugares.map((l) => [l.lat, l.lng] as L.LatLngTuple)),
+            { padding: [60, 60] },
+          );
+        }
+      } else if (res.tipo === 'SET_ROUTE') {
+        this.copilotMessages.update((msgs) => [...msgs, { role: 'ai', text: res.mensaje }]);
+        if (res.destino?.lat && res.destino?.lng) {
+          this.copilotLayer.clearLayers();
+          this.drawOsrmRoute(res.destino.lat, res.destino.lng, true);
+        }
+      }
+    });
   }
 }

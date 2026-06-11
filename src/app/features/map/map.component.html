@@ -384,6 +384,87 @@
     </div>
   }
 
+  <!-- ══ COPILOTO IA ════════════════════════════════════ -->
+  <button class="copilot-btn" (click)="toggleCopilotPanel()" title="Copiloto GPS">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+  </button>
+
+  @if (showCopilotPanel()) {
+    <div class="copilot-panel">
+      <div class="copilot-panel__header">
+        <span class="copilot-panel__title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          Copiloto GPS
+        </span>
+        <button class="copilot-panel__close" (click)="toggleCopilotPanel()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="copilot-messages">
+        @if (copilotMessages().length === 0) {
+          <p class="copilot-empty">Pregúntame qué hay cerca: bares, gasolineras, restaurantes...</p>
+        }
+        @for (msg of copilotMessages(); track $index) {
+          <div class="copilot-msg" [class.copilot-msg--user]="msg.role === 'user'">
+            <div class="copilot-msg__bubble">{{ msg.text }}</div>
+            @if (msg.lugares && msg.lugares.length > 0) {
+              <div class="copilot-lugares">
+                @for (lugar of msg.lugares; track lugar.nombre) {
+                  <span class="copilot-lugar">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                      <circle cx="12" cy="10" r="3"/>
+                    </svg>
+                    {{ lugar.nombre }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        }
+        @if (copilotLoading()) {
+          <div class="copilot-msg">
+            <div class="copilot-msg__bubble copilot-msg__bubble--loading">
+              <span></span><span></span><span></span>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="copilot-input">
+        <input
+          class="copilot-input__field"
+          type="text"
+          placeholder="Bares cerca, gasolinera..."
+          [(ngModel)]="copilotInput"
+          (keydown.enter)="sendCopilotMessage()"
+          [disabled]="copilotLoading()"
+          maxlength="300"
+        />
+        <button class="copilot-input__send"
+                (click)="sendCopilotMessage()"
+                [disabled]="!copilotInput.trim() || copilotLoading()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+            <line x1="22" y1="2" x2="11" y2="13"/>
+            <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
+
   <!-- ══ BOTÓN CENTRAR EN UBICACIÓN ════════════════════ -->
   <button
     class="locate-btn"
@@ -735,6 +816,15 @@
           @if (chat.unreadCount() > 0 && !showChatPanel()) {
             <span class="nav-action-btn__badge">{{ chat.unreadCount() }}</span>
           }
+        </button>
+        <button class="nav-action-btn"
+                [class.nav-action-btn--active]="showCopilotPanel()"
+                (click)="toggleCopilotPanel()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+          IA
         </button>
         <button class="nav-action-btn nav-action-btn--end" (click)="cancelNavigation()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
