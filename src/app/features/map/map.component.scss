@@ -1862,3 +1862,26 @@
   0%, 80%, 100% { transform: scale(0.65); opacity: 0.4; }
   40%            { transform: scale(1.1);  opacity: 1; }
 }
+
+// ── Dark mode overrides ────────────────────────────────────
+:host-context(html.dark) {
+  .trip-card {
+    background: rgba(255,255,255,0.06);
+    &:hover { background: rgba(255,255,255,0.11); }
+    &--active { background: rgba(99,102,241,0.18); border-color: rgba(99,102,241,0.35); }
+  }
+
+  .trips-panel__close { background: rgba(255,255,255,0.08); &:hover { background: rgba(255,255,255,0.14); } }
+  .trip-sheet__vehicles { background: rgba(255,255,255,0.07); }
+  .create-sheet { background: rgba(18,18,30,0.92); }
+  .create-field input, .invite-search__input {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+    color: var(--text-primary);
+    &::placeholder { color: rgba(255,255,255,0.25); }
+  }
+  .nav-instruction-card { background: rgba(18,18,30,0.88); }
+  .nav-bottom-card { background: rgba(18,18,30,0.88); }
+  .nav-action-btn { background: rgba(255,255,255,0.07); &:hover { background: rgba(255,255,255,0.12); } }
+  .nav-vehicles-panel { background: rgba(18,18,30,0.88); }
+}

@@ -35,6 +35,7 @@ import { TrackingService }     from './services/tracking.service';
 import { NavInviteService }    from './services/nav-invite.service';
 import { ParticipantService }  from './services/participant.service';
 import { ChatService }         from './services/chat.service';
+import { ThemeService }        from '../../core/services/theme.service';
 
 // ── Tipos ────────────────────────────────────────────────────
 interface CopilotLocation { nombre: string; lat: number; lng: number; }
@@ -99,6 +100,17 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private routeLayer     = L.layerGroup();
   private vehicleLayer   = L.layerGroup();
   private copilotLayer   = L.layerGroup();
+  private tileLayer?: L.TileLayer;
+
+  readonly themeService = inject(ThemeService);
+  private readonly tileEffect = effect(() => {
+    if (!this.map) return;
+    const dark = this.themeService.dark();
+    if (this.tileLayer) this.map.removeLayer(this.tileLayer);
+    this.tileLayer = L.tileLayer(this.tileUrl(dark), {
+      attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 20,
+    }).addTo(this.map);
+  });
   private vehicleMarkers = new Map<number, L.CircleMarker>();
   private tempMarker?: L.Marker;
   private userMarker?: L.Marker;
@@ -221,10 +233,9 @@ export class MapComponent implements AfterViewInit, OnDestroy {
       renderer: L.svg({ padding: 1 }),
     });
 
-    L.tileLayer(
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-      { attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 20 },
-    ).addTo(this.map);
+    this.tileLayer = L.tileLayer(this.tileUrl(this.themeService.dark()), {
+      attribution: '© OpenStreetMap © CARTO', subdomains: 'abcd', maxZoom: 20,
+    }).addTo(this.map);
 
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
 
@@ -789,6 +800,12 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   trackingLabel(): string {
     const count = this.trackingSvc.liveLocations().length;
     return count > 0 ? `${count} vehículo${count > 1 ? 's' : ''} en vivo` : 'Sin vehículos';
+  }
+
+  private tileUrl(dark: boolean): string {
+    return dark
+      ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+      : 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
   }
 
   private wpColor(type: string): string {
